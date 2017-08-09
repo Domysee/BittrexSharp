@@ -44,7 +44,7 @@ namespace BittrexSharp.BittrexOrderSimulation
             var currentRate = (await GetTicker(marketName)).Last;
 
             var acceptedOrderId = Guid.NewGuid().ToString();
-            if (currentRate < rate)
+            if (currentRate <= rate)
             {
                 var order = new Order
                 {
@@ -73,6 +73,50 @@ namespace BittrexSharp.BittrexOrderSimulation
                     Price = quantity * rate,
                     PricePerUnit = rate,
                     Quantity = quantity
+                };
+                simulatedOpenOrders.Add(order);
+            }
+
+            return new AcceptedOrder
+            {
+                Uuid = acceptedOrderId
+            };
+        }
+
+        public override async Task<AcceptedOrder> SellLimit(string marketName, decimal quantity, decimal rate)
+        {
+            var currentRate = (await GetTicker(marketName)).Last;
+
+            var acceptedOrderId = Guid.NewGuid().ToString();
+            if (currentRate >= rate)
+            {
+                var order = new Order
+                {
+                    Closed = DateTime.Now,
+                    IsOpen = false,
+                    Limit = rate,
+                    Opened = DateTime.Now,
+                    OrderUuid = acceptedOrderId,
+                    Price = -quantity * rate,
+                    PricePerUnit = rate,
+                    Quantity = -quantity
+                };
+                simulatedFinishedOrders.Add(order);
+
+                var currency = Helper.GetTargetCurrencyFromMarketName(marketName);
+                removeBalance(currency, quantity);
+            }
+            else
+            {
+                var order = new OpenOrder
+                {
+                    Closed = DateTime.Now,
+                    Limit = rate,
+                    Opened = DateTime.Now,
+                    OrderUuid = acceptedOrderId,
+                    Price = -quantity * rate,
+                    PricePerUnit = rate,
+                    Quantity = -quantity
                 };
                 simulatedOpenOrders.Add(order);
             }
