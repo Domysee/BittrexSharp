@@ -139,5 +139,19 @@ namespace BittrexSharp.BittrexOrderSimulation
             if (marketName == null) return simulatedOpenOrders;
             else return simulatedOpenOrders.Where(o => o.Exchange == marketName).ToList();
         }
+
+        public override async Task<IEnumerable<CurrencyBalance>> GetBalances()
+        {
+            return simulatedBalances;
+        }
+
+        public override async Task<CurrencyBalance> GetBalance(string currency)
+        {
+            return simulatedBalances.SingleOrDefault(b => b.Currency == currency) ?? new CurrencyBalance
+            {
+                Balance = 0,
+                Currency = currency
+            };
+        }
     }
 }
