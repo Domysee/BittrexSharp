@@ -126,5 +126,11 @@ namespace BittrexSharp.BittrexOrderSimulation
                 Uuid = acceptedOrderId
             };
         }
+
+        public override async Task CancelOrder(string orderId)
+        {
+            var order = simulatedOpenOrders.Single(o => o.OrderUuid == orderId);
+            simulatedOpenOrders.Remove(order);
+        }
     }
 }
