@@ -65,8 +65,8 @@ namespace BittrexSharp
             }
         }
 
-        private HttpRequestMessage createRequest(HttpMethod httpMethod, string uri, bool includeAuthentication = true) => createRequest(httpMethod, uri, new Dictionary<string, string>(), includeAuthentication);
-        private HttpRequestMessage createRequest(HttpMethod httpMethod, string uri, IDictionary<string, string> parameters, bool includeAuthentication = false)
+        protected HttpRequestMessage createRequest(HttpMethod httpMethod, string uri, bool includeAuthentication = true) => createRequest(httpMethod, uri, new Dictionary<string, string>(), includeAuthentication);
+        protected HttpRequestMessage createRequest(HttpMethod httpMethod, string uri, IDictionary<string, string> parameters, bool includeAuthentication = false)
         {
             if (includeAuthentication)
             {
@@ -84,8 +84,8 @@ namespace BittrexSharp
             }
         }
 
-        private async Task<JToken> request(HttpMethod httpMethod, string uri, bool includeAuthentication = true) => await request(httpMethod, uri, new Dictionary<string, string>(), includeAuthentication);
-        private async Task<JToken> request(HttpMethod httpMethod, string uri, IDictionary<string, string> parameters, bool includeAuthentication = false)
+        protected async Task<JToken> request(HttpMethod httpMethod, string uri, bool includeAuthentication = true) => await request(httpMethod, uri, new Dictionary<string, string>(), includeAuthentication);
+        protected async Task<JToken> request(HttpMethod httpMethod, string uri, IDictionary<string, string> parameters, bool includeAuthentication = false)
         {
             var request = createRequest(HttpMethod.Get, uri, parameters, includeAuthentication);
             HttpResponseMessage response = null;
