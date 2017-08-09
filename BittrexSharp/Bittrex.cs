@@ -33,6 +33,7 @@ namespace BittrexSharp
             this.httpClient = new HttpClient();
         }
 
+        #region Helper
         private string byteToString(byte[] buff)
         {
             string sbinary = "";
@@ -106,6 +107,7 @@ namespace BittrexSharp
             if (!result.Success) throw new Exception("Request failed: " + result.Message);
             return result.Result;
         }
+        #endregion
 
         #region Public Api
         /// <summary>
