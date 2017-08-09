@@ -49,6 +49,7 @@ namespace BittrexSharp.BittrexOrderSimulation
                 var order = new Order
                 {
                     Closed = DateTime.Now,
+                    Exchange = marketName,
                     IsOpen = false,
                     Limit = rate,
                     Opened = DateTime.Now,
@@ -67,6 +68,7 @@ namespace BittrexSharp.BittrexOrderSimulation
                 var order = new OpenOrder
                 {
                     Closed = DateTime.Now,
+                    Exchange = marketName,
                     Limit = rate,
                     Opened = DateTime.Now,
                     OrderUuid = acceptedOrderId,
@@ -93,6 +95,7 @@ namespace BittrexSharp.BittrexOrderSimulation
                 var order = new Order
                 {
                     Closed = DateTime.Now,
+                    Exchange = marketName,
                     IsOpen = false,
                     Limit = rate,
                     Opened = DateTime.Now,
@@ -170,6 +173,20 @@ namespace BittrexSharp.BittrexOrderSimulation
                 PricePerUnit = openOrder.PricePerUnit,
                 Quantity = openOrder.Quantity
             };
+        }
+
+        public override async Task<IEnumerable<HistoricOrder>> GetOrderHistory(string marketName = null)
+        {
+            return simulatedFinishedOrders.Where(o => o.Exchange == marketName).Select(o => new HistoricOrder
+            {
+                Exchange = o.Exchange,
+                Limit = o.Limit,
+                OrderUuid = o.OrderUuid,
+                Price = o.Price,
+                PricePerUnit = o.PricePerUnit,
+                Quantity = o.Quantity,
+                Timestamp = o.Closed.Value
+            }).ToList();
         }
     }
 }
