@@ -153,5 +153,23 @@ namespace BittrexSharp.BittrexOrderSimulation
                 Currency = currency
             };
         }
+
+        public override async Task<Order> GetOrder(string orderId)
+        {
+            var openOrder = simulatedOpenOrders.SingleOrDefault(o => o.OrderUuid == orderId);
+            if (openOrder == null) return simulatedFinishedOrders.SingleOrDefault(o => o.OrderUuid == orderId);
+
+            return new Order
+            {
+                Closed = openOrder.Closed,
+                Exchange = openOrder.Exchange,
+                Limit = openOrder.Limit,
+                Opened = openOrder.Opened,
+                OrderUuid = openOrder.OrderUuid,
+                Price = openOrder.Price,
+                PricePerUnit = openOrder.PricePerUnit,
+                Quantity = openOrder.Quantity
+            };
+        }
     }
 }
