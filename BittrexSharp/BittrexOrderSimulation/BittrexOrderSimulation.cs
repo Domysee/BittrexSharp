@@ -111,6 +111,7 @@ namespace BittrexSharp.BittrexOrderSimulation
                 var order = new OpenOrder
                 {
                     Closed = DateTime.Now,
+                    Exchange = marketName,
                     Limit = rate,
                     Opened = DateTime.Now,
                     OrderUuid = acceptedOrderId,
@@ -131,6 +132,12 @@ namespace BittrexSharp.BittrexOrderSimulation
         {
             var order = simulatedOpenOrders.Single(o => o.OrderUuid == orderId);
             simulatedOpenOrders.Remove(order);
+        }
+
+        public override async Task<IEnumerable<OpenOrder>> GetOpenOrders(string marketName = null)
+        {
+            if (marketName == null) return simulatedOpenOrders;
+            else return simulatedOpenOrders.Where(o => o.Exchange == marketName).ToList();
         }
     }
 }
