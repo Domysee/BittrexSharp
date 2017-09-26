@@ -25,6 +25,14 @@ namespace BittrexSharp
         private string apiSecret;
         private byte[] apiSecretBytes;
 
+        public Bittrex()
+        {
+            this.apiKey = null;
+            this.apiSecret = null;
+            this.apiSecretBytes = null;
+            this.httpClient = new HttpClient();
+        }
+
         public Bittrex(string apiKey, string apiSecret)
         {
             this.apiKey = apiKey;
