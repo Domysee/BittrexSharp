@@ -256,8 +256,8 @@ namespace BittrexSharp
             var parameters = new Dictionary<string, string>
             {
                 { "market", marketName },
-                { "quantity", quantity.ToString() },
-                { "rate", rate.ToString() }
+                { "quantity", quantity.ToString(CultureInfo.InvariantCulture) },
+                { "rate", rate.ToString(CultureInfo.InvariantCulture) }
             };
             var jsonResponse = await request(HttpMethod.Get, uri, parameters);
             var acceptedOrder = jsonResponse.ToObject<AcceptedOrder>();
