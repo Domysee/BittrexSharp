@@ -39,9 +39,9 @@ namespace BittrexSharp.BittrexOrderSimulation
             existingBalance.Balance -= quantity;
         }
 
-        public override async Task<AcceptedOrder> BuyLimit(string marketName, decimal quantity, decimal rate)
+        public override async Task<ResponseWrapper<AcceptedOrder>> BuyLimit(string marketName, decimal quantity, decimal rate)
         {
-            var currentRate = (await GetTicker(marketName)).Last;
+            var currentRate = (await GetTicker(marketName)).Result.Last;
 
             var acceptedOrderId = Guid.NewGuid().ToString();
             if (currentRate <= rate)
@@ -79,15 +79,19 @@ namespace BittrexSharp.BittrexOrderSimulation
                 simulatedOpenOrders.Add(order);
             }
 
-            return new AcceptedOrder
+            return new ResponseWrapper<AcceptedOrder>
             {
-                Uuid = acceptedOrderId
+                Success = true,
+                Result = new AcceptedOrder
+                {
+                    Uuid = acceptedOrderId
+                }
             };
         }
 
-        public override async Task<AcceptedOrder> SellLimit(string marketName, decimal quantity, decimal rate)
+        public override async Task<ResponseWrapper<AcceptedOrder>> SellLimit(string marketName, decimal quantity, decimal rate)
         {
-            var currentRate = (await GetTicker(marketName)).Last;
+            var currentRate = (await GetTicker(marketName)).Result.Last;
 
             var acceptedOrderId = Guid.NewGuid().ToString();
             if (currentRate >= rate)
@@ -125,44 +129,70 @@ namespace BittrexSharp.BittrexOrderSimulation
                 simulatedOpenOrders.Add(order);
             }
 
-            return new AcceptedOrder
+            return new ResponseWrapper<AcceptedOrder>
             {
-                Uuid = acceptedOrderId
+                Success = true,
+                Result = new AcceptedOrder
+                {
+                    Uuid = acceptedOrderId
+                }
             };
         }
 
-        public override async Task CancelOrder(string orderId)
+        public override async Task<ResponseWrapper<object>> CancelOrder(string orderId)
         {
             var order = simulatedOpenOrders.Single(o => o.OrderUuid == orderId);
             simulatedOpenOrders.Remove(order);
+            return new ResponseWrapper<object> { Success = true };
         }
 
-        public override async Task<IEnumerable<OpenOrder>> GetOpenOrders(string marketName = null)
+        public override async Task<ResponseWrapper<IEnumerable<OpenOrder>>> GetOpenOrders(string marketName = null)
         {
-            if (marketName == null) return simulatedOpenOrders;
-            else return simulatedOpenOrders.Where(o => o.Exchange == marketName).ToList();
+            if (marketName == null) return new ResponseWrapper<IEnumerable<OpenOrder>>
+            {
+                Success = true,
+                Result = simulatedOpenOrders
+            };
+            else return new ResponseWrapper<IEnumerable<OpenOrder>>
+            {
+                Success = true,
+                Result = simulatedOpenOrders.Where(o => o.Exchange == marketName).ToList()
+            };
         }
 
-        public override async Task<IEnumerable<CurrencyBalance>> GetBalances()
+        public override async Task<ResponseWrapper<IEnumerable<CurrencyBalance>>> GetBalances()
         {
-            return simulatedBalances;
+            return new ResponseWrapper<IEnumerable<CurrencyBalance>>
+            {
+                Success = true,
+                Result = simulatedBalances
+            };
         }
 
-        public override async Task<CurrencyBalance> GetBalance(string currency)
+        public override async Task<ResponseWrapper<CurrencyBalance>> GetBalance(string currency)
         {
-            return simulatedBalances.SingleOrDefault(b => b.Currency == currency) ?? new CurrencyBalance
+            var currencyBalance = simulatedBalances.SingleOrDefault(b => b.Currency == currency) ?? new CurrencyBalance
             {
                 Balance = 0,
                 Currency = currency
             };
+            return new ResponseWrapper<CurrencyBalance>
+            {
+                Success = true,
+                Result = currencyBalance
+            };
         }
 
-        public override async Task<Order> GetOrder(string orderId)
+        public override async Task<ResponseWrapper<Order>> GetOrder(string orderId)
         {
             var openOrder = simulatedOpenOrders.SingleOrDefault(o => o.OrderUuid == orderId);
-            if (openOrder == null) return simulatedFinishedOrders.SingleOrDefault(o => o.OrderUuid == orderId);
+            if (openOrder == null) return new ResponseWrapper<Order>
+            {
+                Success = true,
+                Result = simulatedFinishedOrders.SingleOrDefault(o => o.OrderUuid == orderId)
+            };
 
-            return new Order
+            var order = new Order
             {
                 Closed = openOrder.Closed,
                 Exchange = openOrder.Exchange,
@@ -173,11 +203,16 @@ namespace BittrexSharp.BittrexOrderSimulation
                 PricePerUnit = openOrder.PricePerUnit,
                 Quantity = openOrder.Quantity
             };
+            return new ResponseWrapper<Order>
+            {
+                Success = true,
+                Result = order
+            };
         }
 
-        public override async Task<IEnumerable<HistoricOrder>> GetOrderHistory(string marketName = null)
+        public override async Task<ResponseWrapper<IEnumerable<HistoricOrder>>> GetOrderHistory(string marketName = null)
         {
-            return simulatedFinishedOrders.Where(o => o.Exchange == marketName).Select(o => new HistoricOrder
+            var historicOrders = simulatedFinishedOrders.Where(o => o.Exchange == marketName).Select(o => new HistoricOrder
             {
                 Exchange = o.Exchange,
                 Limit = o.Limit,
@@ -187,6 +222,11 @@ namespace BittrexSharp.BittrexOrderSimulation
                 Quantity = o.Quantity,
                 Timestamp = o.Closed.Value
             }).ToList();
+            return new ResponseWrapper<IEnumerable<HistoricOrder>>
+            {
+                Success = true,
+                Result = historicOrders
+            };
         }
     }
 }

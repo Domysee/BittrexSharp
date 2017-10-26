@@ -97,8 +97,9 @@ namespace BittrexSharp
             }
         }
 
-        protected async Task<JToken> request(HttpMethod httpMethod, string uri, bool includeAuthentication = true) => await request(httpMethod, uri, new Dictionary<string, string>(), includeAuthentication);
-        protected async Task<JToken> request(HttpMethod httpMethod, string uri, IDictionary<string, string> parameters, bool includeAuthentication = true)
+        protected async Task<ResponseWrapper<TResult>> request<TResult>(HttpMethod httpMethod, string uri, bool includeAuthentication = true)
+            => await request<TResult>(httpMethod, uri, new Dictionary<string, string>(), includeAuthentication);
+        protected async Task<ResponseWrapper<TResult>> request<TResult>(HttpMethod httpMethod, string uri, IDictionary<string, string> parameters, bool includeAuthentication = true)
         {
             var request = createRequest(HttpMethod.Get, uri, parameters, includeAuthentication);
             HttpResponseMessage response = null;
@@ -115,9 +116,24 @@ namespace BittrexSharp
             }
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<BittrexResponse>(content);
-            if (!result.Success) throw new Exception("Request failed: " + result.Message);
-            return result.Result;
+            var bittrexResponse = JsonConvert.DeserializeObject<BittrexResponse>(content);
+            var result = new ResponseWrapper<TResult>
+            {
+                Success = bittrexResponse.Success,
+                Message = bittrexResponse.Message
+            };
+            if (bittrexResponse.Success)
+            {
+                try
+                {
+                    result.Result = bittrexResponse.Result.ToObject<TResult>();
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Error converting json to .Net types", e);
+                }
+            }
+            return result;
         }
         #endregion
 
@@ -126,24 +142,22 @@ namespace BittrexSharp
         /// Get a list of all markets and associated metadata
         /// </summary>
         /// <returns></returns>
-        public virtual async Task<IEnumerable<Market>> GetMarkets()
+        public virtual async Task<ResponseWrapper<IEnumerable<Market>>> GetMarkets()
         {
             var uri = BaseUrl + "public/getmarkets";
-            var jsonResponse = await request(HttpMethod.Get, uri, false);
-            var markets = jsonResponse.ToObject<IEnumerable<Market>>();
-            return markets;
+            var marketsResponse = await request<IEnumerable<Market>>(HttpMethod.Get, uri, false);
+            return marketsResponse;
         }
 
         /// <summary>
         /// Get a list of all supported currencies and associated metadata
         /// </summary>
         /// <returns></returns>
-        public virtual async Task<IEnumerable<SupportedCurrency>> GetSupportedCurrencies()
+        public virtual async Task<ResponseWrapper<IEnumerable<SupportedCurrency>>> GetSupportedCurrencies()
         {
             var uri = BaseUrl + "public/getcurrencies";
-            var jsonResponse = await request(HttpMethod.Get, uri, false);
-            var supportedCurrencies = jsonResponse.ToObject<IEnumerable<SupportedCurrency>>();
-            return supportedCurrencies;
+            var supportedCurrenciesResponse = await request<IEnumerable<SupportedCurrency>>(HttpMethod.Get, uri, false);
+            return supportedCurrenciesResponse;
         }
 
         /// <summary>
@@ -151,30 +165,28 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="marketName">The name of the market, e.g. BTC-LTC</param>
         /// <returns></returns>
-        public virtual async Task<Ticker> GetTicker(string marketName)
+        public virtual async Task<ResponseWrapper<Ticker>> GetTicker(string marketName)
         {
             var uri = BaseUrl + "public/getticker";
             var parameters = new Dictionary<string, string>
             {
                 { "market", marketName }
             };
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters, false);
-            var ticker = jsonResponse.ToObject<Ticker>();
-            if (ticker == null) return null;
-            ticker.MarketName = marketName;
-            return ticker;
+            var tickerResponse = await request<Ticker>(HttpMethod.Get, uri, parameters, false);
+            if (tickerResponse.Result != null)
+                tickerResponse.Result.MarketName = marketName;
+            return tickerResponse;
         }
 
         /// <summary>
         /// Get summaries of the last 24 hours of all markets
         /// </summary>
         /// <returns></returns>
-        public virtual async Task<IEnumerable<MarketSummary>> GetMarketSummaries()
+        public virtual async Task<ResponseWrapper<IEnumerable<MarketSummary>>> GetMarketSummaries()
         {
             var uri = BaseUrl + "public/getmarketsummaries";
-            var jsonResponse = await request(HttpMethod.Get, uri, false);
-            var marketSummaries = jsonResponse.ToObject<IEnumerable<MarketSummary>>();
-            return marketSummaries;
+            var marketSummariesResponse = await request<IEnumerable<MarketSummary>>(HttpMethod.Get, uri, false);
+            return marketSummariesResponse;
         }
 
         /// <summary>
@@ -182,16 +194,15 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="marketName">The name of the market, e.g. BTC-LTC</param>
         /// <returns></returns>
-        public virtual async Task<MarketSummary> GetMarketSummary(string marketName)
+        public virtual async Task<ResponseWrapper<MarketSummary>> GetMarketSummary(string marketName)
         {
             var uri = BaseUrl + "public/getmarketsummary";
             var parameters = new Dictionary<string, string>
             {
                 { "market", marketName }
             };
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters, false);
-            var marketSummary = jsonResponse.ToObject<MarketSummary>();
-            return marketSummary;
+            var marketSummaryResponse = await request<MarketSummary>(HttpMethod.Get, uri, parameters, false);
+            return marketSummaryResponse;
         }
 
         /// <summary>
@@ -201,7 +212,7 @@ namespace BittrexSharp
         /// <param name="orderType">The types of orders you want to get, use the static properties of OrderType.</param>
         /// <param name="depth"></param>
         /// <returns></returns>
-        public virtual async Task<OrderBook> GetOrderBook(string marketName, string orderType, int depth)
+        public virtual async Task<ResponseWrapper<OrderBook>> GetOrderBook(string marketName, string orderType, int depth)
         {
             var uri = BaseUrl + "public/getorderbook";
             var parameters = new Dictionary<string, string>
@@ -210,18 +221,28 @@ namespace BittrexSharp
                 { "type", orderType },
                 { "depth", depth.ToString(CultureInfo.InvariantCulture) }
             };
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters, false);
-            var orderBook = new OrderBook();
+
+            var orderBookResponse = new ResponseWrapper<OrderBook> { Result = new OrderBook() };
 
             if (orderType == OrderType.Both)
-                orderBook = jsonResponse.ToObject<OrderBook>();
+                orderBookResponse = await request<OrderBook>(HttpMethod.Get, uri, parameters, false);
             else if (orderType == OrderType.Buy)
-                orderBook.Buy = jsonResponse.ToObject<IEnumerable<OrderBookEntry>>();
+            {
+                var buyOrderBookEntriesResponse = await request<IEnumerable<OrderBookEntry>>(HttpMethod.Get, uri, parameters, false);
+                orderBookResponse.Success = buyOrderBookEntriesResponse.Success;
+                orderBookResponse.Message = buyOrderBookEntriesResponse.Message;
+                orderBookResponse.Result.Buy = buyOrderBookEntriesResponse.Result;
+            }
             else if (orderType == OrderType.Sell)
-                orderBook.Sell = jsonResponse.ToObject<IEnumerable<OrderBookEntry>>();
+            {
+                var buyOrderBookEntriesResponse = await request<IEnumerable<OrderBookEntry>>(HttpMethod.Get, uri, parameters, false);
+                orderBookResponse.Success = buyOrderBookEntriesResponse.Success;
+                orderBookResponse.Message = buyOrderBookEntriesResponse.Message;
+                orderBookResponse.Result.Sell = buyOrderBookEntriesResponse.Result;
+            }
 
-            orderBook.MarketName = marketName;
-            return orderBook;
+            orderBookResponse.Result.MarketName = marketName;
+            return orderBookResponse;
         }
 
         /// <summary>
@@ -229,16 +250,15 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="marketName">The name of the market, e.g. BTC-LTC</param>
         /// <returns></returns>
-        public virtual async Task<IEnumerable<Trade>> GetMarketHistory(string marketName)
+        public virtual async Task<ResponseWrapper<IEnumerable<Trade>>> GetMarketHistory(string marketName)
         {
             var uri = BaseUrl + "public/getmarkethistory";
             var parameters = new Dictionary<string, string>
             {
                 { "market", marketName }
             };
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters, false);
-            var orders = jsonResponse.ToObject<IEnumerable<Trade>>();
-            return orders;
+            var ordersResponse = await request<IEnumerable<Trade>>(HttpMethod.Get, uri, parameters, false);
+            return ordersResponse;
         }
         #endregion
 
@@ -250,7 +270,7 @@ namespace BittrexSharp
         /// <param name="quantity">How much of the currency you want to buy</param>
         /// <param name="rate">The price at which you want to buy</param>
         /// <returns></returns>
-        public virtual async Task<AcceptedOrder> BuyLimit(string marketName, decimal quantity, decimal rate)
+        public virtual async Task<ResponseWrapper<AcceptedOrder>> BuyLimit(string marketName, decimal quantity, decimal rate)
         {
             var uri = BaseUrl + "market/buylimit";
             var parameters = new Dictionary<string, string>
@@ -259,9 +279,8 @@ namespace BittrexSharp
                 { "quantity", quantity.ToString(CultureInfo.InvariantCulture) },
                 { "rate", rate.ToString(CultureInfo.InvariantCulture) }
             };
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters);
-            var acceptedOrder = jsonResponse.ToObject<AcceptedOrder>();
-            return acceptedOrder;
+            var acceptedOrderResponse = await request<AcceptedOrder>(HttpMethod.Get, uri, parameters);
+            return acceptedOrderResponse;
         }
 
         /// <summary>
@@ -271,7 +290,7 @@ namespace BittrexSharp
         /// <param name="quantity">How much of the currency you want to sell</param>
         /// <param name="rate">The price at which you want to sell</param>
         /// <returns></returns>
-        public virtual async Task<AcceptedOrder> SellLimit(string marketName, decimal quantity, decimal rate)
+        public virtual async Task<ResponseWrapper<AcceptedOrder>> SellLimit(string marketName, decimal quantity, decimal rate)
         {
             var uri = BaseUrl + "market/selllimit";
             var parameters = new Dictionary<string, string>
@@ -280,9 +299,8 @@ namespace BittrexSharp
                 { "quantity", quantity.ToString(CultureInfo.InvariantCulture) },
                 { "rate", rate.ToString(CultureInfo.InvariantCulture) }
             };
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters);
-            var acceptedOrder = jsonResponse.ToObject<AcceptedOrder>();
-            return acceptedOrder;
+            var acceptedOrderResponse = await request<AcceptedOrder>(HttpMethod.Get, uri, parameters);
+            return acceptedOrderResponse;
         }
 
         /// <summary>
@@ -290,14 +308,14 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="orderId">The uuid of the order to cancel</param>
         /// <returns></returns>
-        public virtual async Task CancelOrder(string orderId)
+        public virtual async Task<ResponseWrapper<object>> CancelOrder(string orderId)
         {
             var uri = BaseUrl + "market/cancel";
             var parameters = new Dictionary<string, string>
             {
                 { "uuid", orderId }
             };
-            await request(HttpMethod.Get, uri, parameters);
+            return await request<object>(HttpMethod.Get, uri, parameters);
         }
 
         /// <summary>
@@ -305,15 +323,14 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="marketName">If given, only get the open orders of the given market</param>
         /// <returns></returns>
-        public virtual async Task<IEnumerable<OpenOrder>> GetOpenOrders(string marketName = null)
+        public virtual async Task<ResponseWrapper<IEnumerable<OpenOrder>>> GetOpenOrders(string marketName = null)
         {
             var uri = BaseUrl + "market/getopenorders";
             var parameters = new Dictionary<string, string>();
             if (marketName != null) parameters.Add("market", marketName);
 
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters);
-            var openOrders = jsonResponse.ToObject<IEnumerable<OpenOrder>>();
-            return openOrders;
+            var openOrdersResponse = await request<IEnumerable<OpenOrder>>(HttpMethod.Get, uri, parameters);
+            return openOrdersResponse;
         }
         #endregion
 
@@ -322,12 +339,11 @@ namespace BittrexSharp
         /// Get the balance of all cryptocurrencies
         /// </summary>
         /// <returns></returns>
-        public virtual async Task<IEnumerable<CurrencyBalance>> GetBalances()
+        public virtual async Task<ResponseWrapper<IEnumerable<CurrencyBalance>>> GetBalances()
         {
             var uri = BaseUrl + "account/getbalances";
-            var jsonResponse = await request(HttpMethod.Get, uri);
-            var balances = jsonResponse.ToObject<IEnumerable<CurrencyBalance>>();
-            return balances;
+            var balancesResponse = await request<IEnumerable<CurrencyBalance>>(HttpMethod.Get, uri);
+            return balancesResponse;
         }
 
         /// <summary>
@@ -335,16 +351,15 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="currency">Currency symbol, e.g. BTC</param>
         /// <returns></returns>
-        public virtual async Task<CurrencyBalance> GetBalance(string currency)
+        public virtual async Task<ResponseWrapper<CurrencyBalance>> GetBalance(string currency)
         {
             var uri = BaseUrl + "account/getbalance";
             var parameters = new Dictionary<string, string>
             {
                 { "currency", currency }
             };
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters);
-            var balance = jsonResponse.ToObject<CurrencyBalance>();
-            return balance;
+            var balanceResponse = await request<CurrencyBalance>(HttpMethod.Get, uri, parameters);
+            return balanceResponse;
         }
 
         /// <summary>
@@ -352,16 +367,15 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="currency">Currency symbol, e.g. BTC</param>
         /// <returns></returns>
-        public virtual async Task<DepositAddress> GetDepositAddress(string currency)
+        public virtual async Task<ResponseWrapper<DepositAddress>> GetDepositAddress(string currency)
         {
             var uri = BaseUrl + "account/getdepositaddress";
             var parameters = new Dictionary<string, string>
             {
                 { "currency", currency }
             };
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters);
-            var depositAddress = jsonResponse.ToObject<DepositAddress>();
-            return depositAddress;
+            var depositAddressResponse = await request<DepositAddress>(HttpMethod.Get, uri, parameters);
+            return depositAddressResponse;
         }
 
         /// <summary>
@@ -372,7 +386,7 @@ namespace BittrexSharp
         /// <param name="address">The address to which the funds should be sent</param>
         /// <param name="paymentId"></param>
         /// <returns></returns>
-        public virtual async Task<AcceptedWithdrawal> Withdraw(string currency, decimal quantity, string address, string paymentId = null)
+        public virtual async Task<ResponseWrapper<AcceptedWithdrawal>> Withdraw(string currency, decimal quantity, string address, string paymentId = null)
         {
             var uri = BaseUrl + "account/withdraw";
             var parameters = new Dictionary<string, string>
@@ -382,9 +396,8 @@ namespace BittrexSharp
                 { "address", address },
                 { "paymentid", paymentId }
             };
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters);
-            var acceptedWithdrawal = jsonResponse.ToObject<AcceptedWithdrawal>();
-            return acceptedWithdrawal;
+            var acceptedWithdrawalResponse = await request<AcceptedWithdrawal>(HttpMethod.Get, uri, parameters);
+            return acceptedWithdrawalResponse;
         }
 
         /// <summary>
@@ -392,16 +405,15 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="orderId">The uuid of the order</param>
         /// <returns></returns>
-        public virtual async Task<Order> GetOrder(string orderId)
+        public virtual async Task<ResponseWrapper<Order>> GetOrder(string orderId)
         {
             var uri = BaseUrl + "account/getorder";
             var parameters = new Dictionary<string, string>
             {
                 { "uuid", orderId }
             };
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters);
-            var order = jsonResponse.ToObject<Order>();
-            return order;
+            var orderResponse = await request<Order>(HttpMethod.Get, uri, parameters);
+            return orderResponse;
         }
 
         /// <summary>
@@ -409,15 +421,14 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="marketName">If given, restricts the history to the given market</param>
         /// <returns></returns>
-        public virtual async Task<IEnumerable<HistoricOrder>> GetOrderHistory(string marketName = null)
+        public virtual async Task<ResponseWrapper<IEnumerable<HistoricOrder>>> GetOrderHistory(string marketName = null)
         {
             var uri = BaseUrl + "account/getorderhistory";
             var parameters = new Dictionary<string, string>();
             if (marketName != null) parameters.Add("market", marketName);
 
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters);
-            var orderHistory = jsonResponse.ToObject<IEnumerable<HistoricOrder>>();
-            return orderHistory;
+            var orderHistoryResponse = await request<IEnumerable<HistoricOrder>>(HttpMethod.Get, uri, parameters);
+            return orderHistoryResponse;
         }
 
         /// <summary>
@@ -425,15 +436,14 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="currency">If given, restricts the history to the given currency</param>
         /// <returns></returns>
-        public virtual async Task<IEnumerable<HistoricWithdrawal>> GetWithdrawalHistory(string currency = null)
+        public virtual async Task<ResponseWrapper<IEnumerable<HistoricWithdrawal>>> GetWithdrawalHistory(string currency = null)
         {
             var uri = BaseUrl + "account/getwithdrawalhistory";
             var parameters = new Dictionary<string, string>();
             if (currency != null) parameters.Add("currency", currency);
 
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters);
-            var withdrawalHistory = jsonResponse.ToObject<IEnumerable<HistoricWithdrawal>>();
-            return withdrawalHistory;
+            var withdrawalHistoryResponse = await request<IEnumerable<HistoricWithdrawal>>(HttpMethod.Get, uri, parameters);
+            return withdrawalHistoryResponse;
         }
 
         /// <summary>
@@ -441,15 +451,14 @@ namespace BittrexSharp
         /// </summary>
         /// <param name="currency">If given, restricts the history to the given currency</param>
         /// <returns></returns>
-        public virtual async Task<IEnumerable<HistoricDeposit>> GetDepositHistory(string currency = null)
+        public virtual async Task<ResponseWrapper<IEnumerable<HistoricDeposit>>> GetDepositHistory(string currency = null)
         {
             var uri = BaseUrl + "account/getdeposithistory";
             var parameters = new Dictionary<string, string>();
             if (currency != null) parameters.Add("currency", currency);
 
-            var jsonResponse = await request(HttpMethod.Get, uri, parameters);
-            var depositHistory = jsonResponse.ToObject<IEnumerable<HistoricDeposit>>();
-            return depositHistory;
+            var depositHistoryResponse = await request<IEnumerable<HistoricDeposit>>(HttpMethod.Get, uri, parameters);
+            return depositHistoryResponse;
         }
         #endregion
     }
