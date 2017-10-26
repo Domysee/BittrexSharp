@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -207,7 +208,7 @@ namespace BittrexSharp
             {
                 { "market", marketName },
                 { "type", orderType },
-                { "depth", depth.ToString() }
+                { "depth", depth.ToString(CultureInfo.InvariantCulture) }
             };
             var jsonResponse = await request(HttpMethod.Get, uri, parameters, false);
             var orderBook = new OrderBook();
@@ -276,8 +277,8 @@ namespace BittrexSharp
             var parameters = new Dictionary<string, string>
             {
                 { "market", marketName },
-                { "quantity", quantity.ToString() },
-                { "rate", rate.ToString() }
+                { "quantity", quantity.ToString(CultureInfo.InvariantCulture) },
+                { "rate", rate.ToString(CultureInfo.InvariantCulture) }
             };
             var jsonResponse = await request(HttpMethod.Get, uri, parameters);
             var acceptedOrder = jsonResponse.ToObject<AcceptedOrder>();
@@ -377,7 +378,7 @@ namespace BittrexSharp
             var parameters = new Dictionary<string, string>
             {
                 { "currency", currency },
-                { "quantity", quantity.ToString() },
+                { "quantity", quantity.ToString(CultureInfo.InvariantCulture) },
                 { "address", address },
                 { "paymentid", paymentId }
             };
