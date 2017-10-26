@@ -54,7 +54,7 @@ namespace BittrexSharp
         private string convertParameterListToString(IDictionary<string, string> parameters)
         {
             if (parameters.Count == 0) return "";
-            return parameters.Select(param => WebUtility.UrlEncode(param.Key) + "=" + WebUtility.UrlEncode(param.Value)).Aggregate((l, r) => l + "&" + r);
+            return parameters.Select(param => WebUtility.UrlEncode(param.Key) + "=" + WebUtility.UrlEncode(param.Value.Replace(',', '.'))).Aggregate((l, r) => l + "&" + r);
         }
 
         private (string uri, string hash) createRequestAuthentication(string uri) => createRequestAuthentication(uri, new Dictionary<string, string>());
