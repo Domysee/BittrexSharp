@@ -1,4 +1,5 @@
 ﻿using BittrexSharp.Domain;
+using BittrexSharp.Exceptions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -60,6 +61,9 @@ namespace BittrexSharp
         private (string uri, string hash) createRequestAuthentication(string uri) => createRequestAuthentication(uri, new Dictionary<string, string>());
         private (string uri, string hash) createRequestAuthentication(string uri, IDictionary<string, string> parameters)
         {
+            if (apiKey == null) throw new UnauthorizedException("No api key was provided");
+            if (apiSecret == null) throw new UnauthorizedException("No api secret was provided");
+
             parameters = new Dictionary<string, string>(parameters);
 
             var nonce = DateTime.Now.Ticks;
