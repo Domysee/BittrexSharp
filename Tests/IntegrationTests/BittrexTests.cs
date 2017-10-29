@@ -1,5 +1,6 @@
 ﻿using BittrexSharp;
 using BittrexSharp.Domain;
+using BittrexSharp.Exceptions;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -84,11 +85,27 @@ namespace Tests.IntegrationTests
         }
 
         [TestMethod]
+        public void BuyLimit_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.BuyLimit(DefaultMarketName, 1, 1); };
+            action.ShouldThrow<UnauthorizedException>();
+        }
+
+        [TestMethod]
         public void SellLimit_ShouldNotThrowException()
         {
             var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
             Func<Task> action = async () => { var _ = await bittrex.SellLimit(DefaultMarketName, 1, 1); };
             action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void SellLimit_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.SellLimit(DefaultMarketName, 1, 1); };
+            action.ShouldThrow<UnauthorizedException>();
         }
 
         [TestMethod]
@@ -101,11 +118,28 @@ namespace Tests.IntegrationTests
         }
 
         [TestMethod]
+        public void CancelOrder_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var orderId = Guid.NewGuid().ToString();
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.CancelOrder(orderId); };
+            action.ShouldThrow<UnauthorizedException>();
+        }
+
+        [TestMethod]
         public void GetOpenOrders_ShouldNotThrowException()
         {
             var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
             Func<Task> action = async () => { var _ = await bittrex.GetOpenOrders(); };
             action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void GetOpenOrders_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.GetOpenOrders(); };
+            action.ShouldThrow<UnauthorizedException>();
         }
         #endregion
     }
