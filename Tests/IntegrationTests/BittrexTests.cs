@@ -12,9 +12,11 @@ namespace Tests.IntegrationTests
     [TestClass]
     public class BittrexTests
     {
-        #region Public Api
         private const string DefaultMarketName = "BTC-ETH";
+        private const string DefaultApiKey = "";
+        private const string DefaultApiSecret = "";
 
+        #region Public Api
         [TestMethod]
         public void GetMarkets_ShouldNotThrowException()
         {
@@ -68,6 +70,41 @@ namespace Tests.IntegrationTests
         {
             var bittrex = new Bittrex();
             Func<Task> action = async () => { var _ = await bittrex.GetMarketHistory(DefaultMarketName); };
+            action.ShouldNotThrow();
+        }
+        #endregion
+
+        #region Market Api
+        [TestMethod]
+        public void BuyLimit_ShouldNotThrowException()
+        {
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.BuyLimit(DefaultMarketName, 1, 1); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void SellLimit_ShouldNotThrowException()
+        {
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.SellLimit(DefaultMarketName, 1, 1); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void CancelOrder_ShouldNotThrowException()
+        {
+            var orderId = Guid.NewGuid().ToString();
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.CancelOrder(orderId); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void GetOpenOrders_ShouldNotThrowException()
+        {
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.GetOpenOrders(); };
             action.ShouldNotThrow();
         }
         #endregion
