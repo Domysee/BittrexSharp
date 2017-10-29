@@ -201,8 +201,13 @@ namespace BittrexSharp
             {
                 { "market", marketName }
             };
-            var marketSummaryResponse = await request<MarketSummary>(HttpMethod.Get, uri, parameters, false);
-            return marketSummaryResponse;
+            var marketSummaryResponse = await request<IEnumerable<MarketSummary>>(HttpMethod.Get, uri, parameters, false);
+            return new ResponseWrapper<MarketSummary>
+            {
+                Success = marketSummaryResponse.Success,
+                Message = marketSummaryResponse.Message,
+                Result = marketSummaryResponse.Result.FirstOrDefault()
+            };
         }
 
         /// <summary>
