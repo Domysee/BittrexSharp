@@ -14,8 +14,10 @@ namespace Tests.IntegrationTests
     public class BittrexTests
     {
         private const string DefaultMarketName = "BTC-ETH";
+        private const string DefaultCurrency = "BTC";
         private const string DefaultApiKey = "";
         private const string DefaultApiSecret = "";
+        private const string DefaultTargetAddress = "";
 
         #region Public Api
         [TestMethod]
@@ -139,6 +141,138 @@ namespace Tests.IntegrationTests
         {
             var bittrex = new Bittrex();
             Func<Task> action = async () => { var _ = await bittrex.GetOpenOrders(); };
+            action.ShouldThrow<UnauthorizedException>();
+        }
+        #endregion
+
+        #region Account Api
+        [TestMethod]
+        public void GetBalances_ShouldNotThrowException()
+        {
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.GetBalances(); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void GetBalances_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.GetBalances(); };
+            action.ShouldThrow<UnauthorizedException>();
+        }
+
+        [TestMethod]
+        public void GetBalance_ShouldNotThrowException()
+        {
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.GetBalance(DefaultCurrency); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void GetBalance_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.GetBalance(DefaultCurrency); };
+            action.ShouldThrow<UnauthorizedException>();
+        }
+
+        [TestMethod]
+        public void GetDepositAddress_ShouldNotThrowException()
+        {
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.GetDepositAddress(DefaultCurrency); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void GetDepositAddress_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.GetDepositAddress(DefaultCurrency); };
+            action.ShouldThrow<UnauthorizedException>();
+        }
+
+        [TestMethod]
+        public void Withdraw_ShouldNotThrowException()
+        {
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.Withdraw(DefaultCurrency, 0, DefaultTargetAddress); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void Withdraw_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.Withdraw(DefaultCurrency, 0, DefaultTargetAddress); };
+            action.ShouldThrow<UnauthorizedException>();
+        }
+
+        [TestMethod]
+        public void GetOrder_ShouldNotThrowException()
+        {
+            var orderId = Guid.NewGuid().ToString();
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.GetOrder(orderId); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void GetOrder_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var orderId = Guid.NewGuid().ToString();
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.GetOrder(orderId); };
+            action.ShouldThrow<UnauthorizedException>();
+        }
+
+        [TestMethod]
+        public void GetOrderHistory_ShouldNotThrowException()
+        {
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.GetOrderHistory(); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void GetOrderHistory_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.GetOrderHistory(); };
+            action.ShouldThrow<UnauthorizedException>();
+        }
+
+        [TestMethod]
+        public void GetWithdrawalHistory_ShouldNotThrowException()
+        {
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.GetWithdrawalHistory(); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void GetWithdrawalHistory_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.GetWithdrawalHistory(); };
+            action.ShouldThrow<UnauthorizedException>();
+        }
+
+        [TestMethod]
+        public void GetDepositHistory_ShouldNotThrowException()
+        {
+            var bittrex = new Bittrex(DefaultApiKey, DefaultApiSecret);
+            Func<Task> action = async () => { var _ = await bittrex.GetDepositHistory(); };
+            action.ShouldNotThrow();
+        }
+
+        [TestMethod]
+        public void GetDepositHistory_ShouldUnauthorizedThrowException_IfNoApiKeyIsGiven()
+        {
+            var bittrex = new Bittrex();
+            Func<Task> action = async () => { var _ = await bittrex.GetDepositHistory(); };
             action.ShouldThrow<UnauthorizedException>();
         }
         #endregion
