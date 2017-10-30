@@ -128,7 +128,7 @@ namespace BittrexSharp
                 }
                 catch (Exception e)
                 {
-                    throw new Exception("Error converting json to .Net types", e);
+                    throw new JsonConversionException("Error converting json to .Net types", e, bittrexResponse.Result.ToString(Formatting.Indented), typeof(TResult));
                 }
             }
             return result;
