@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace BittrexSharp
 {
-    public class Bittrex
+    public class Bittrex : IBittrex
     {
         public const string Version = "v1.1";
         public const string BaseUrl = "https://bittrex.com/api/" + Version + "/";
