@@ -107,7 +107,12 @@ namespace BittrexSharp
         {
             var request = createRequest(HttpMethod.Get, uri, parameters, includeAuthentication);
             HttpResponseMessage response = await httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+                return new ResponseWrapper<TResult>
+                {
+                    Success = false,
+                    Message = "HTTP Error: " + response.StatusCode + " " + response.ReasonPhrase
+                };
             var content = await response.Content.ReadAsStringAsync();
             var bittrexResponse = JsonConvert.DeserializeObject<BittrexResponse>(content);
             var result = new ResponseWrapper<TResult>
