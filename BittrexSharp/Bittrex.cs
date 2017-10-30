@@ -106,18 +106,7 @@ namespace BittrexSharp
         protected async Task<ResponseWrapper<TResult>> request<TResult>(HttpMethod httpMethod, string uri, IDictionary<string, string> parameters, bool includeAuthentication = true)
         {
             var request = createRequest(HttpMethod.Get, uri, parameters, includeAuthentication);
-            HttpResponseMessage response = null;
-            while (response == null)
-            {
-                try
-                {
-                    response = await httpClient.SendAsync(request);
-                }
-                catch (Exception)
-                {
-                    response = null;
-                }
-            }
+            HttpResponseMessage response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
             var bittrexResponse = JsonConvert.DeserializeObject<BittrexResponse>(content);
