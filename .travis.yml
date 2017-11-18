@@ -1,0 +1,14 @@
+language: csharp
+mono: none
+dotnet: 2.0.3
+dist: trusty
+solution: BittrexSharp.sln
+script:
+ - dotnet restore
+ - dotnet build -c Release
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: dotnet nuget push .\BittrexSharp\bin\Release\BittrexSharp.0.1.0.nupkg --source nuget.org --api-key $NUGET_API_KEY
+  on:
+    branch: master
