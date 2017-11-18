@@ -1,6 +1,6 @@
 language: csharp
 mono: none
-dotnet: 1.0.3
+dotnet: 2.0.3
 dist: trusty
 solution: BittrexSharp.sln
 script:
