@@ -6,6 +6,20 @@ BittrexSharp is a thin wrapper around the Bittrex api which wraps each endpoint 
 It exposes the same fields, so its [documentation][1] of input and output is applicable for BittrexSharp too.  
 BittrexSharp also handles authentication.
 
+## Installing
+
+BittrexSharp is listed as [Nuget package][2], so you can either use the package manager UI, or install it with the Package Manager CLI
+
+```
+Install-Package BittrexSharp -Version 0.1.0
+```
+
+or with .Net CLI
+
+```
+dotnet add package BittrexSharp --version 0.1.0
+```
+
 ## Using BittrexSharp
 
 The main class is `Bittrex`. It is the main wrapper for the api. The only things needed for its instantiation is an api key and its secret.
@@ -32,3 +46,4 @@ var bittrex = new BittrexOrderSimulation(apiKey, apiSecret);
 ```
 
 [1]:https://bittrex.com/home/api
+[2]:https://www.nuget.org/packages/BittrexSharp/
