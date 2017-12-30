@@ -14,5 +14,8 @@ namespace BittrexSharp.Domain
         public string MarketName { get; set; }
         public bool IsActive { get; set; }
         public DateTime Created { get; set; }
+        public string Notice { get; set; }
+        public bool? IsSponsored { get; set; }
+        public string LogoUrl { get; set; }
     }
 }
